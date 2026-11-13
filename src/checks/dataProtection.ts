@@ -1,6 +1,6 @@
 import type { AppModel, Finding } from "../types.js";
 import { isCode, isTest } from "../model/files.js";
-import { excerpt, finding, OWASP, scan } from "./util.js";
+import { excerpt, finding, OWASP, scan, stripStrings } from "./util.js";
 
 const PII_WORDS = /\b(email|phone|full_?name|first_?name|last_?name|address|dob|date_?of_?birth|nin|bvn|diagnosis|symptoms|medical|health|patient|salary|card)\w*/i;
 const AI_IMPORT = /(from\s+["'](openai|@anthropic-ai\/sdk|@google\/generative-ai|@google\/genai|ai|@ai-sdk\/[\w-]+|groq-sdk|@mistralai\/[\w-]+|cohere-ai)["']|api\.openai\.com|api\.anthropic\.com|generativelanguage\.googleapis\.com)/;
@@ -33,8 +33,8 @@ export function dataProtectionCheck(model: AppModel): Finding[] {
 
   // Personal or secret data in logs
   for (const { file, line, match } of scan(model.files, /\b(console\.(log|info|debug|warn|error)|logger\.\w+|print)\s*\(([^)]*)\)/)) {
-    const args = match[3];
-    const secret = /\b(password|passwd|token|secret|otp|pin|card_?number|cvv)\b/i.test(args);
+    const args = stripStrings(match[3]);
+    const secret = /\b(password|passwd|token|secret|otp|pin|card_?number|cvv|access_?token|refresh_?token|accessToken|refreshToken|api_?key|apiKey)\b/i.test(args);
     const pii = PII_WORDS.test(args) || /\b(req\.body|body|user|patient|customer)\b\s*[,)]/.test(args + ")");
     if (!secret && !pii) continue;
     out.push(finding({

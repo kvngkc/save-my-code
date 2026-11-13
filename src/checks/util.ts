@@ -14,13 +14,16 @@ export function* scan(
   files: SourceFile[],
   re: RegExp,
   filter: (f: SourceFile) => boolean = (f) => isCode(f.path) && !isTest(f.path),
+  skipComments = true,
 ): Generator<{ file: SourceFile; line: number; match: RegExpMatchArray }> {
   const flags = re.flags.includes("g") ? re.flags : re.flags + "g";
   const global = new RegExp(re.source, flags);
   for (const file of files) {
     if (!filter(file)) continue;
     for (const match of file.content.matchAll(global)) {
-      yield { file, line: lineOf(file.content, match.index!), match };
+      const line = lineOf(file.content, match.index!);
+      if (skipComments && /^\s*(\/\/|\*|\/\*|#)/.test(file.lines[line - 1] ?? "")) continue;
+      yield { file, line, match };
     }
   }
 }
@@ -42,3 +45,9 @@ export const OWASP = {
   A09: "OWASP Top 10 A09: Security Logging and Monitoring Failures",
   ASVS: "OWASP ASVS 4.0",
 };
+
+/** Code that never runs in production: tests, fixtures, evals, one-off scripts and seeds. */
+export const isDevOnly = (p: string) => isTest(p) || /(^|\/)(scripts?|evals?|seeds?|benchmarks?|examples?|docs?)\//.test(p) || /\.(eval|bench|stories)\.[jt]sx?$/.test(p);
+
+/** Strip string literals so log messages like "token refreshed" don't count as logging a token. */
+export const stripStrings = (s: string) => s.replace(/(["'`])(?:\\.|(?!\1)[^\\])*\1/g, '""');

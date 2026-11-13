@@ -66,8 +66,11 @@ export const SIGNALS: Record<string, Signal> = {
   },
 
   no_secrets_in_logs: ({ findings }) => {
-    const bad = findings.filter((f) => f.ruleId === "data-protection/secret-in-logs" || f.ruleId === "data-protection/pii-in-logs");
-    return bad.length ? { status: "fail", evidence: list(bad) } : { status: "pass", evidence: "No personal data or credentials found in log statements." };
+    const logs = findings.filter((f) => f.ruleId === "data-protection/secret-in-logs" || f.ruleId === "data-protection/pii-in-logs");
+    const bad = logs.filter((f) => f.severity !== "low" && f.severity !== "info");
+    if (bad.length) return { status: "fail", evidence: list(bad) };
+    if (logs.length) return { status: "unknown", evidence: `Possible personal data in logs (low confidence): ${list(logs)}` };
+    return { status: "pass", evidence: "No personal data or credentials found in log statements." };
   },
 
   breach_process_documented: ({ model }) => {

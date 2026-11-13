@@ -31,8 +31,8 @@ export function secretsCheck(model: AppModel): Finding[] {
   const all = () => true;
 
   for (const p of PATTERNS) {
-    for (const { file, line, match } of scan(model.files, p.re, all)) {
-      if (/EXAMPLE/.test(match[0])) continue;
+    for (const { file, line, match } of scan(model.files, p.re, all, false)) {
+      if (/EXAMPLE|test|fake|mock|dummy|sample|xxxx/i.test(match[0])) continue;
       out.push(finding({
         ruleId: `secrets/${p.id}`,
         title: `${p.name} committed to the repository`,
@@ -96,7 +96,8 @@ export function secretsCheck(model: AppModel): Finding[] {
 
   // Generic hardcoded credentials in code
   for (const { file, line, match } of scan(model.files, GENERIC)) {
-    if (PLACEHOLDER.test(match[2])) continue;
+    // Skip placeholders and values that are environment variable names, e.g. clientSecret: "XERO_CLIENT_SECRET"
+    if (PLACEHOLDER.test(match[2]) || /^[A-Z][A-Z0-9_]+$/.test(match[2])) continue;
     out.push(finding({
       ruleId: "secrets/hardcoded-credential",
       title: `Hardcoded ${match[1]} in source`,

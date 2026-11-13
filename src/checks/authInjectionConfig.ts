@@ -1,5 +1,5 @@
 import type { AppModel, Finding } from "../types.js";
-import { isCode, isTest } from "../model/files.js";
+import { extractBlock, isCode, isTest, lineOf } from "../model/files.js";
 import { excerpt, finding, OWASP, scan } from "./util.js";
 
 const HASHING = /\b(bcrypt|argon2|scrypt|pbkdf2|hashPassword|hash_password|passlib|make_password|generate_password_hash)\b/i;
@@ -11,9 +11,16 @@ export function authCheck(model: AppModel): Finding[] {
 
   // Plaintext password storage
   for (const f of code) {
-    const m = f.content.match(/\b(insert|create|save|upsert|INSERT\s+INTO)\b[\s\S]{0,400}?\bpassword\b\s*[:,)]/);
-    if (!m || HASHING.test(f.content) || /auth\.(signUp|admin\.createUser)/.test(f.content)) continue;
-    const line = f.content.slice(0, m.index! + m[0].lastIndexOf("password")).split("\n").length;
+    if (HASHING.test(f.content) || /auth\.(signUp|admin\.createUser)/.test(f.content)) continue;
+    let line = 0;
+    for (const m of f.content.matchAll(/\.(insert|create|createMany|save|upsert|values)\(\s*\{|INSERT\s+INTO\s+\w+\s*\([^)]*\bpassword\b/gi)) {
+      const block = m[0].startsWith("INSERT") || m[0].startsWith("insert into") ? m[0] : extractBlock(f.content, m.index!, 2000);
+      const pw = block.match(/\bpassword\b\s*[:,}]|\bpassword\b\s*\)/);
+      if (!pw || /password\w*\s*:\s*(await\s+)?\w*(hash|crypt|argon)/i.test(block)) continue;
+      line = lineOf(f.content, m.index! + block.indexOf(pw[0]));
+      break;
+    }
+    if (!line) continue;
     out.push(finding({
       ruleId: "auth/plaintext-password",
       title: "Password stored without hashing",
@@ -82,12 +89,13 @@ export function authCheck(model: AppModel): Finding[] {
   for (const { file, line } of scan(model.files, /Math\.random\(\)/)) {
     const ctx = file.lines.slice(Math.max(0, line - 4), line + 3).join("\n");
     if (!/(token|otp|reset|code|secret|password|session|invite|verification)/i.test(ctx)) continue;
+    const mixed = /crypto\.(getRandomValues|randomBytes|randomInt|randomUUID)|nanoid|customAlphabet/.test(file.content);
     out.push(finding({
       ruleId: "auth/insecure-random-token",
       title: "Security token generated with Math.random()",
-      severity: "high",
+      severity: mixed ? "low" : "high",
       category: "auth",
-      confidence: "medium",
+      confidence: mixed ? "low" : "medium",
       file: file.path,
       line,
       evidence: excerpt(file, line),
@@ -152,7 +160,7 @@ export function injectionCheck(model: AppModel): Finding[] {
       references: [OWASP.A03],
     }));
   }
-  for (const { file, line } of scan(model.files, /\b(eval|new Function)\s*\(\s*(?!["'`])/)) {
+  for (const { file, line } of scan(model.files, /(?<![\w.$])(eval|new Function)\((?!["'`)])/)) {
     out.push(finding({
       ruleId: "injection/eval",
       title: "Dynamic code execution",
@@ -184,6 +192,8 @@ export function injectionCheck(model: AppModel): Finding[] {
   }
   for (const { file, line } of scan(model.files, /dangerouslySetInnerHTML|v-html=|\{@html\s/)) {
     if (/DOMPurify|sanitize/i.test(file.content)) continue;
+    // JSON-LD structured data (<script type="application/ld+json">) serialised with JSON.stringify is not an XSS sink for user markup.
+    if (/__html:\s*JSON\.stringify\(/.test(file.lines.slice(line - 1, line + 2).join(" "))) continue;
     out.push(finding({
       ruleId: "injection/xss-raw-html",
       title: "Raw HTML rendered without sanitisation",

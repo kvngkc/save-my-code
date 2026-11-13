@@ -105,6 +105,8 @@ function supabaseRls(model: AppModel): Finding[] {
       continue;
     }
     for (const p of t.policies) {
+      // Policies granted only to trusted server roles do not expose data to app users.
+      if (p.roles.length && p.roles.every((r) => ["service_role", "postgres", "supabase_admin"].includes(r))) continue;
       const using = (p.using ?? "").replace(/\s+/g, "").toLowerCase();
       const check = (p.check ?? "").replace(/\s+/g, "").toLowerCase();
       const permissive = using === "true" || (p.command === "insert" && check === "true") || (!p.using && !p.check);

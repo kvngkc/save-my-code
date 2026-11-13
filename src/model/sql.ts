@@ -38,9 +38,12 @@ export function parseSql(files: SourceFile[]): SqlTable[] {
       if (!t) continue;
       const body = m[3];
       const command = (body.match(/\bfor\s+(select|insert|update|delete|all)\b/i)?.[1] ?? "all").toLowerCase();
+      const roles = (body.match(/\bto\s+([\w\s,"]+?)(?=\s+(using|with|for|as)\b|$)/i)?.[1] ?? "public")
+        .split(",").map((r) => r.trim().replace(/"/g, "").toLowerCase()).filter(Boolean);
       t.policies.push({
         name: m[1].replace(/"/g, ""),
         command,
+        roles,
         using: balancedAfter(body, /\busing\s*\(/i),
         check: balancedAfter(body, /\bwith\s+check\s*\(/i),
         file: f.path,

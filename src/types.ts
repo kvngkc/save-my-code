@@ -57,6 +57,7 @@ export interface Route {
 export interface SqlPolicy {
   name: string;
   command: string;
+  roles: string[];
   using?: string;
   check?: string;
   file: string;
