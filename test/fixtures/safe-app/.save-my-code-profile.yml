@@ -1,0 +1,5 @@
+project: safe-app
+jurisdictions: [NG, EU]
+users_located_in: [NG]
+collects_personal_data: true
+sensitive_data: []

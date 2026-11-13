@@ -1,0 +1,12 @@
+project: "Naija Clinic Bookings (demo)"
+jurisdictions: [NG]
+users_located_in: [NG]
+industry: healthcare
+collects_personal_data: true
+sensitive_data: [health, government-id]
+processes_payments: false
+automated_decisions: false
+children: false
+serves: consumers
+uses_ai_providers: auto
+hosting_region: us-east-1

@@ -1,0 +1,215 @@
+pack: gdpr
+title: EU General Data Protection Regulation (Regulation (EU) 2016/679)
+jurisdiction: EU
+version: 0.1.0
+source_url: https://eur-lex.europa.eu/eli/reg/2016/679/oj
+effective_date: "2018-05-25"
+review_status: unreviewed
+disclaimer: >
+  This rule pack is an engineering interpretation of the GDPR to help developers find likely gaps. It is not
+  legal advice and has not yet been reviewed by a qualified data-protection lawyer. Whether the GDPR applies
+  to a non-EU business depends on Art. 3 (territorial scope) and should be confirmed.
+
+requirements:
+  - id: GDPR-01
+    title: Lawful basis for every processing purpose
+    citation: "GDPR Art. 6"
+    citation_verified: true
+    summary: Each processing purpose needs a lawful basis (consent, contract, legal obligation, vital interests, public task, legitimate interests).
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: hybrid
+      signals: [consent_capture]
+      question: Which lawful basis applies to each purpose, and is it recorded?
+    needs_lawyer: true
+    remediation: Document a lawful basis per purpose. Capture consent explicitly where consent is the basis.
+
+  - id: GDPR-02
+    title: Conditions for consent
+    citation: "GDPR Art. 7"
+    citation_verified: true
+    summary: Consent must be demonstrable, distinguishable from other matters, and as easy to withdraw as to give.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: hybrid
+      signals: [consent_capture]
+      question: Can users withdraw consent in-product?
+    needs_lawyer: false
+    remediation: Store consent records and provide a withdrawal control.
+
+  - id: GDPR-03
+    title: Transparency and privacy notice
+    citation: "GDPR Art. 12-14"
+    citation_verified: true
+    summary: Provide concise, accessible information about the controller, purposes, legal bases, recipients, transfers, retention and rights.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: hybrid
+      signals: [privacy_notice_present]
+      question: Does the notice list every recipient detected in the code?
+    needs_lawyer: false
+    remediation: Publish a privacy notice and link it wherever personal data is collected.
+
+  - id: GDPR-04
+    title: Data minimisation
+    citation: "GDPR Art. 5(1)(c)"
+    citation_verified: true
+    summary: Personal data must be adequate, relevant and limited to what is necessary.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: manual
+      question: Is each detected personal data field necessary for a stated purpose?
+    needs_lawyer: false
+    remediation: Remove unnecessary fields and document the purpose of the rest.
+
+  - id: GDPR-05
+    title: Storage limitation
+    citation: "GDPR Art. 5(1)(e)"
+    citation_verified: true
+    summary: Keep personal data in identifiable form no longer than necessary.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: hybrid
+      signals: [retention_policy]
+      question: What are the retention periods and what enforces them?
+    needs_lawyer: false
+    remediation: Define retention periods and automate deletion.
+
+  - id: GDPR-06
+    title: Security of processing
+    citation: "GDPR Art. 32"
+    citation_verified: true
+    summary: Implement appropriate technical and organisational measures, including access control, encryption and regular testing.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: automated
+      signals: [access_control_enforced, no_exposed_secrets, password_hashing, no_critical_vulnerabilities, no_secrets_in_logs]
+    needs_lawyer: false
+    remediation: Fix all critical and high findings, then re-scan.
+
+  - id: GDPR-07
+    title: Breach notification to the supervisory authority within 72 hours
+    citation: "GDPR Art. 33-34"
+    citation_verified: true
+    summary: Notify the supervisory authority within 72 hours of becoming aware of a breach unless it is unlikely to result in a risk, and notify individuals when the risk is high.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: hybrid
+      signals: [breach_process_documented]
+      question: Is there an incident-response process that can meet the 72-hour deadline?
+    needs_lawyer: false
+    remediation: Write an incident-response runbook and ensure logging can detect unauthorised access.
+
+  - id: GDPR-08
+    title: Rights of access, erasure and portability
+    citation: "GDPR Art. 15, 17, 20"
+    citation_verified: true
+    summary: Individuals can obtain a copy of their data, have it erased, and receive it in a portable format.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: hybrid
+      signals: [account_deletion, data_export]
+      question: How are rights requests received and fulfilled within one month?
+    needs_lawyer: false
+    remediation: Add account deletion and data export, or a documented manual process.
+
+  - id: GDPR-09
+    title: Special categories of personal data
+    citation: "GDPR Art. 9"
+    citation_verified: true
+    summary: Processing health, biometric, genetic, religious, ethnic, political or sex-life data is prohibited unless an Art. 9(2) condition applies.
+    applies_when: { sensitive_data_any: [health, biometric, religious, ethnic, political, sexual] }
+    verification:
+      type: hybrid
+      signals: [sensitive_data_protected]
+      question: Which Art. 9(2) condition applies?
+    needs_lawyer: true
+    remediation: Confirm an Art. 9(2) condition (often explicit consent) and apply heightened safeguards.
+
+  - id: GDPR-10
+    title: Children's consent for information society services
+    citation: "GDPR Art. 8"
+    citation_verified: true
+    summary: Where consent is the basis for offering online services directly to a child under 16 (member states may lower to 13), parental consent is required.
+    applies_when: { children: true }
+    verification:
+      type: hybrid
+      signals: [age_gate]
+      question: How is age verified and parental consent obtained?
+    needs_lawyer: true
+    remediation: Add age verification and a parental-consent flow.
+
+  - id: GDPR-11
+    title: Automated individual decision-making
+    citation: "GDPR Art. 22"
+    citation_verified: true
+    summary: Individuals have the right not to be subject to solely automated decisions with legal or similarly significant effects, subject to exceptions and safeguards.
+    applies_when: { automated_decisions: true }
+    verification:
+      type: manual
+      question: Which decisions are solely automated, and how can individuals obtain human intervention?
+    needs_lawyer: true
+    remediation: Provide human review and meaningful information about the logic involved.
+
+  - id: GDPR-12
+    title: International transfers
+    citation: "GDPR Art. 44-49"
+    citation_verified: true
+    summary: Transfers outside the EEA require an adequacy decision or appropriate safeguards such as Standard Contractual Clauses.
+    applies_when: { uses_processors: true }
+    verification:
+      type: hybrid
+      signals: [ai_provider_transfer, processors_identified]
+      question: What transfer mechanism covers each non-EEA recipient?
+    needs_lawyer: true
+    remediation: Record the transfer mechanism for each recipient and minimise transferred data.
+
+  - id: GDPR-13
+    title: Data protection impact assessment
+    citation: "GDPR Art. 35"
+    citation_verified: true
+    summary: A DPIA is required before processing likely to result in high risk, e.g. large-scale special-category data or systematic monitoring.
+    applies_when: { sensitive_data_any: [health, financial, children, biometric, government-id] }
+    verification:
+      type: manual
+      question: Has a DPIA been completed?
+    needs_lawyer: true
+    remediation: Complete a DPIA before launch.
+
+  - id: GDPR-14
+    title: Processor contracts
+    citation: "GDPR Art. 28"
+    citation_verified: true
+    summary: Processing by a processor must be governed by a contract with the Art. 28(3) terms.
+    applies_when: { uses_processors: true }
+    verification:
+      type: hybrid
+      signals: [processors_identified]
+      question: Is a DPA in place with each processor?
+    needs_lawyer: false
+    remediation: Accept or sign each provider's DPA and keep a processor register.
+
+  - id: GDPR-15
+    title: Data protection by design and by default
+    citation: "GDPR Art. 25"
+    citation_verified: true
+    summary: Build data protection into the design, and by default only process the personal data necessary for each purpose.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: hybrid
+      signals: [access_control_enforced, no_secrets_in_logs]
+      question: Are privacy-protective defaults used (e.g. profiles private by default, optional fields optional)?
+    needs_lawyer: false
+    remediation: Default to the most privacy-protective settings and restrict access by default.
+
+  - id: GDPR-16
+    title: EU representative for non-EU controllers
+    citation: "GDPR Art. 27"
+    citation_verified: true
+    summary: Controllers not established in the EU but subject to the GDPR under Art. 3(2) must designate a representative in the EU, subject to limited exceptions.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: manual
+      question: Are you established in the EU? If not, have you designated an EU representative or confirmed an exception applies?
+    needs_lawyer: true
+    remediation: Confirm whether Art. 3(2) applies and appoint an EU representative if required.

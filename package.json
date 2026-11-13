@@ -1,0 +1,30 @@
+{
+  "name": "save-my-code",
+  "version": "0.1.0",
+  "description": "Independent assurance for AI-generated software: security, access control, data protection and jurisdiction-aware compliance checks before you ship.",
+  "type": "module",
+  "bin": {
+    "save-my-code": "dist/cli.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "rules", "skills", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "scan:example": "node dist/cli.js scan examples/naija-clinic-bookings --no-external"
+  },
+  "engines": { "node": ">=20" },
+  "keywords": ["security", "sast", "compliance", "ndpa", "gdpr", "ai-generated-code", "vibe-coding", "supabase", "access-control"],
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

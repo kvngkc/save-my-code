@@ -1,0 +1,238 @@
+pack: ndpa-2023
+title: Nigeria Data Protection Act 2023
+jurisdiction: NG
+version: 0.1.0
+source_url: https://ndpc.gov.ng/resources/
+effective_date: "2023-06-12"
+review_status: unreviewed
+disclaimer: >
+  This rule pack is an engineering interpretation of the Nigeria Data Protection Act 2023 to help developers
+  find likely gaps. It is not legal advice and has not yet been reviewed by a qualified Nigerian
+  data-protection lawyer. Section references marked citation_verified: false must be checked against the
+  official text and any NDPC regulations or guidance (including the General Application and Implementation
+  Directive) before relying on them.
+
+requirements:
+  - id: NDPA-01
+    title: Lawful basis for every processing purpose
+    citation: "NDPA 2023, s.25 (lawful basis of processing)"
+    citation_verified: false
+    summary: >
+      Personal data may only be processed on a lawful basis such as consent, performance of a contract,
+      legal obligation, vital interests, public interest or legitimate interests. Each purpose needs its own basis.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: hybrid
+      signals: [consent_capture]
+      question: For each purpose (account, bookings, marketing, analytics, AI features), which lawful basis do you rely on, and where is it recorded?
+    needs_lawyer: true
+    remediation: >
+      Write down each purpose and its lawful basis. Where you rely on consent, capture it explicitly (unticked
+      checkbox, timestamp, version of the notice shown) and store it.
+
+  - id: NDPA-02
+    title: Valid, provable and withdrawable consent
+    citation: "NDPA 2023, s.26 (consent)"
+    citation_verified: false
+    summary: >
+      Where consent is the lawful basis it must be freely given, specific, informed and unambiguous; the
+      controller must be able to demonstrate it, and withdrawing must be as easy as giving it.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: hybrid
+      signals: [consent_capture]
+      question: Can a user withdraw consent (e.g. marketing, AI processing) from inside the product?
+    needs_lawyer: false
+    remediation: Store consent records (who, what, when, notice version) and add a settings toggle to withdraw consent.
+
+  - id: NDPA-03
+    title: Privacy notice provided to data subjects
+    citation: "NDPA 2023, s.27 (provision of information to the data subject)"
+    citation_verified: false
+    summary: >
+      Before collecting personal data, tell people who you are, what you collect, why, the lawful basis,
+      who receives it (including processors and transfers abroad), how long you keep it, and their rights.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: hybrid
+      signals: [privacy_notice_present]
+      question: Does the privacy notice name every recipient detected in the code (AI providers, payment providers, hosting)?
+    needs_lawyer: false
+    remediation: Publish a privacy notice, link it from sign-up and every form that collects personal data, and keep it in sync with the processors your code uses.
+
+  - id: NDPA-04
+    title: Data minimisation and purpose limitation
+    citation: "NDPA 2023, s.24 (principles of personal data processing)"
+    citation_verified: false
+    summary: >
+      Collect only personal data that is adequate, relevant and limited to what the stated purpose needs,
+      and do not reuse it for incompatible purposes.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: manual
+      question: Review the personal data fields Save-My-Code detected. Is each one necessary for a stated purpose?
+    needs_lawyer: false
+    remediation: Remove fields you do not need (e.g. full NIN/BVN when a verification flag would do) and document the purpose of each remaining field.
+
+  - id: NDPA-05
+    title: Storage limitation and retention
+    citation: "NDPA 2023, s.24 (principles of personal data processing)"
+    citation_verified: false
+    summary: Keep personal data no longer than necessary for the purpose, then delete or anonymise it.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: hybrid
+      signals: [retention_policy]
+      question: What is the retention period for each type of record, and what deletes it when the period ends?
+    needs_lawyer: false
+    remediation: Define retention periods and implement scheduled deletion (e.g. pg_cron job or scheduled function) for expired records and logs.
+
+  - id: NDPA-06
+    title: Appropriate technical and organisational security measures
+    citation: "NDPA 2023, s.39 (security, integrity and confidentiality)"
+    citation_verified: false
+    summary: >
+      Controllers and processors must implement appropriate measures to protect personal data against
+      unauthorised access, loss, destruction and disclosure, such as access control, encryption,
+      pseudonymisation and regular testing.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: automated
+      signals: [access_control_enforced, no_exposed_secrets, password_hashing, no_critical_vulnerabilities, no_secrets_in_logs]
+    needs_lawyer: false
+    remediation: Fix all critical and high findings in this report, then re-scan. Add encryption at rest for sensitive fields and restrict administrative access.
+
+  - id: NDPA-07
+    title: Personal data breach notification process
+    citation: "NDPA 2023, s.40 (personal data breaches)"
+    citation_verified: false
+    summary: >
+      Controllers must notify the Nigeria Data Protection Commission of breaches likely to result in a risk
+      to individuals within 72 hours of becoming aware, and notify affected individuals where the risk is high.
+      Processors must notify the controller without delay.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: hybrid
+      signals: [breach_process_documented]
+      question: Who decides whether an incident is notifiable, and how would you meet the 72-hour deadline?
+    needs_lawyer: false
+    remediation: Write an incident-response runbook (detection, triage, NDPC notification within 72 hours, user notification, record-keeping) and add logging/monitoring that would detect unauthorised access.
+
+  - id: NDPA-08
+    title: Data subject rights (access, rectification, erasure, portability)
+    citation: "NDPA 2023, s.34-38 (rights of a data subject)"
+    citation_verified: false
+    summary: >
+      Individuals can request access to, correction and deletion of their data, restriction, objection and
+      data portability. You need a way to fulfil these requests within the required time.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: hybrid
+      signals: [account_deletion, data_export]
+      question: How do users submit rights requests, and who handles them?
+    needs_lawyer: false
+    remediation: Add account deletion that also removes or anonymises related records, and a data export (JSON/CSV) or documented manual process.
+
+  - id: NDPA-09
+    title: Sensitive personal data handled on a permitted basis with extra safeguards
+    citation: "NDPA 2023, s.30 (sensitive personal data)"
+    citation_verified: false
+    summary: >
+      Health, genetic, biometric, religious, ethnic, political, sexual-life and similar data may only be
+      processed under specific conditions (e.g. explicit consent) and with heightened safeguards.
+    applies_when: { sensitive_data_any: [health, biometric, religious, ethnic, political, sexual] }
+    verification:
+      type: hybrid
+      signals: [sensitive_data_protected]
+      question: What specific condition permits processing each category of sensitive data?
+    needs_lawyer: true
+    remediation: Obtain explicit consent or confirm another permitted condition, encrypt sensitive fields, and limit access to staff who need it.
+
+  - id: NDPA-10
+    title: Children's personal data
+    citation: "NDPA 2023, s.31 (children and persons lacking legal capacity)"
+    citation_verified: false
+    summary: >
+      Processing the personal data of a child requires consent from a parent or legal guardian, and the
+      controller must take reasonable steps to verify age and consent.
+    applies_when: { children: true }
+    verification:
+      type: hybrid
+      signals: [age_gate]
+      question: How do you verify age and obtain verifiable parental consent?
+    needs_lawyer: true
+    remediation: Add age verification and a parental-consent flow before collecting a child's data.
+
+  - id: NDPA-11
+    title: Automated decision-making
+    citation: "NDPA 2023, s.37 (automated decision-making)"
+    citation_verified: false
+    summary: >
+      Individuals have the right not to be subject to decisions based solely on automated processing that
+      produce legal or similarly significant effects, subject to exceptions and safeguards such as human review.
+    applies_when: { automated_decisions: true }
+    verification:
+      type: manual
+      question: Which decisions are fully automated, what effect do they have on people, and how can someone request human review?
+    needs_lawyer: true
+    remediation: Add a human-review path and explain the logic involved in plain language in the privacy notice.
+
+  - id: NDPA-12
+    title: Cross-border transfers of personal data
+    citation: "NDPA 2023, s.41-43 (cross-border transfers)"
+    citation_verified: false
+    summary: >
+      Personal data may only be transferred outside Nigeria where the recipient is subject to adequate
+      protection or another lawful transfer basis applies, and the basis must be recorded. Sending data to
+      foreign-hosted AI, analytics, email or database providers is a transfer.
+    applies_when: { uses_processors: true }
+    verification:
+      type: hybrid
+      signals: [ai_provider_transfer, processors_identified]
+      question: Where is each provider hosted, and what transfer basis do you rely on for each?
+    needs_lawyer: true
+    remediation: List every foreign recipient, record the transfer basis for each, minimise what you send, and disclose transfers in the privacy notice.
+
+  - id: NDPA-13
+    title: Data protection impact assessment for high-risk processing
+    citation: "NDPA 2023, s.28 (data privacy impact assessment)"
+    citation_verified: false
+    summary: >
+      Where processing is likely to result in high risk to individuals (e.g. sensitive data at scale,
+      systematic monitoring, automated decisions, children), a DPIA must be carried out before processing.
+    applies_when: { sensitive_data_any: [health, financial, children, biometric, government-id] }
+    verification:
+      type: manual
+      question: Has a DPIA been completed for this processing, and are its mitigations implemented?
+    needs_lawyer: true
+    remediation: Complete a DPIA before launch. This report's findings and detected data flows are a useful starting input.
+
+  - id: NDPA-14
+    title: Processor obligations and contracts
+    citation: "NDPA 2023, s.29 (data processors)"
+    citation_verified: false
+    summary: >
+      Controllers must only use processors that provide sufficient guarantees and must govern processing
+      by a written agreement.
+    applies_when: { uses_processors: true }
+    verification:
+      type: hybrid
+      signals: [processors_identified]
+      question: Do you have a data processing agreement (DPA) with each third-party processor detected?
+    needs_lawyer: false
+    remediation: Accept or sign the provider's DPA for each processor and keep a list of processors with their purpose and location.
+
+  - id: NDPA-15
+    title: Registration as a data controller or processor of major importance
+    citation: "NDPA 2023, s.44 (registration of data controllers and processors of major importance)"
+    citation_verified: false
+    summary: >
+      Controllers and processors designated as being of "major importance" (based on criteria such as the
+      number of data subjects and the value or significance of the data, as prescribed by the NDPC) must
+      register with the Commission.
+    applies_when: { collects_personal_data: true }
+    verification:
+      type: manual
+      question: Based on current NDPC thresholds, is your organisation a data controller or processor of major importance?
+    needs_lawyer: true
+    remediation: Check current NDPC registration thresholds and register if they apply.

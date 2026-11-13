@@ -1,0 +1,80 @@
+name: Save-My-Code
+description: Independent assurance for AI-generated code - access control, secrets, auth, injection, data protection and NDPA/GDPR checks, with a release gate.
+branding:
+  icon: shield
+  color: green
+inputs:
+  path:
+    description: Directory to scan
+    default: "."
+  fail-on:
+    description: Block when a finding is at or above this severity (critical | high | medium | low | none)
+    default: high
+  fail-on-compliance:
+    description: Also block when a compliance requirement fails
+    default: "false"
+  profile:
+    description: Path to a compliance profile (defaults to .save-my-code/profile.yml in the scanned directory)
+    default: ""
+  ai:
+    description: Run the AI review step (requires the anthropic-api-key input)
+    default: "false"
+  anthropic-api-key:
+    description: Anthropic API key for the AI review step. Pass it from a repository secret.
+    default: ""
+  upload-sarif:
+    description: Upload findings to GitHub code scanning (needs security-events write permission)
+    default: "true"
+outputs:
+  verdict:
+    description: pass | warn | block
+    value: ${{ steps.scan.outputs.verdict }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Install Save-My-Code
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npm ci --no-audit --no-fund && npm run build
+    - name: Scan
+      id: scan
+      shell: bash
+      env:
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+        SMC_PATH: ${{ inputs.path }}
+        SMC_FAIL_ON: ${{ inputs.fail-on }}
+        SMC_PROFILE: ${{ inputs.profile }}
+        SMC_AI: ${{ inputs.ai }}
+        SMC_FAIL_ON_COMPLIANCE: ${{ inputs.fail-on-compliance }}
+      run: |
+        args=(scan "$SMC_PATH" --format md,json,html,sarif --out "$RUNNER_TEMP/save-my-code" --fail-on "$SMC_FAIL_ON")
+        [ -n "$SMC_PROFILE" ] && args+=(--profile "$SMC_PROFILE")
+        [ "$SMC_AI" = "true" ] && args+=(--ai)
+        [ "$SMC_FAIL_ON_COMPLIANCE" = "true" ] && args+=(--fail-on-compliance)
+        set +e
+        node "${{ github.action_path }}/dist/cli.js" "${args[@]}"
+        code=$?
+        set -e
+        verdict=$(node -e 'console.log(require(process.argv[1]).decision.verdict)' "$RUNNER_TEMP/save-my-code/report.json")
+        echo "verdict=$verdict" >> "$GITHUB_OUTPUT"
+        cat "$RUNNER_TEMP/save-my-code/report.md" >> "$GITHUB_STEP_SUMMARY"
+        echo "SMC_EXIT=$code" >> "$GITHUB_ENV"
+    - name: Upload SARIF
+      if: ${{ always() && inputs.upload-sarif == 'true' }}
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ runner.temp }}/save-my-code/report.sarif
+        category: save-my-code
+      continue-on-error: true
+    - name: Upload report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: save-my-code-report
+        path: ${{ runner.temp }}/save-my-code
+    - name: Release gate
+      shell: bash
+      run: exit "${SMC_EXIT:-0}"

@@ -1,0 +1,4 @@
+node_modules/
+dist/
+**/.save-my-code/reports/
+*.log
