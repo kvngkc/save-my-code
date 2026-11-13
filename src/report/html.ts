@@ -44,9 +44,10 @@ export function renderHtml(r: ScanResult): string {
 <title>Save-My-Code report</title>
 <style>
 :root{--bg:#fafaf9;--fg:#1c1917;--muted:#57534e;--card:#fff;--line:#e7e5e4;--crit:#b91c1c;--high:#c2410c;--med:#a16207;--low:#1d4ed8;--info:#57534e;--ok:#15803d}
-@media (prefers-color-scheme:dark){:root{--bg:#1c1917;--fg:#f5f5f4;--muted:#a8a29e;--card:#292524;--line:#44403c;--crit:#f87171;--high:#fb923c;--med:#facc15;--low:#60a5fa;--info:#a8a29e;--ok:#4ade80}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1917;--fg:#f5f5f4;--muted:#a8a29e;--card:#292524;--line:#44403c;--crit:#f87171;--high:#fb923c;--med:#facc15;--low:#60a5fa;--info:#a8a29e;--ok:#4ade80;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1c1917;--fg:#f5f5f4;--muted:#a8a29e;--card:#292524;--line:#44403c;--crit:#f87171;--high:#fb923c;--med:#facc15;--low:#60a5fa;--info:#a8a29e;--ok:#4ade80;color-scheme:dark}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
-main{max-width:1000px;margin:0 auto;padding:24px 16px}h1{margin:0 0 4px}h2{margin-top:36px;border-bottom:1px solid var(--line);padding-bottom:6px}
+main{max-width:1000px;margin:0 auto;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}h1{margin:0 0 4px}h2{margin-top:36px;border-bottom:1px solid var(--line);padding-bottom:6px}
 .sub{color:var(--muted)}.verdict{display:inline-block;padding:6px 14px;border-radius:999px;font-weight:700;margin:12px 0}
 .v-pass{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}.v-warn{background:color-mix(in srgb,var(--med) 20%,transparent);color:var(--med)}.v-block{background:color-mix(in srgb,var(--crit) 18%,transparent);color:var(--crit)}
 .tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
